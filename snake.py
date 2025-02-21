@@ -107,7 +107,8 @@ class Snake():
 
             # no new space: end
             if not status:
-                return False
+                self.dead = True
+                return None
 
             # no tail removed
             tail_old = None
@@ -123,12 +124,12 @@ class Snake():
         # check collisions with walls
         if head_height_new < 0 or head_width_new < 0 or head_height_new >= self.grid_height or head_width_new >= self.grid_width:
             self.dead = True
-            return False
+            return None
 
         # check collisions with body
         if (head_height_new, head_width_new) in self.body:
             self.dead = True
-            return False
+            return None
         
         # no collisions: add head
         self.body.insert(0, (head_height_new, head_width_new))
@@ -137,7 +138,4 @@ class Snake():
         self.tail_old = tail_old
         self.food_old = food_old
 
-        # return success
-        return True
-
-
+        return None

@@ -4,15 +4,15 @@ import numpy as np
 
 class Display():
     
-    def __init__(self, grid_height, grid_width, tick=1):
+    def __init__(self, grid_height, grid_width, window_height=500, window_width=500, tick=1):
         '''Initialize.'''
 
         # initialize pygame
         pygame.init()
 
         # window: high resolution, display on screen
-        self.window_width = 500
-        self.window_height = 500
+        self.window_width = window_width
+        self.window_height = window_height
         self.window = pygame.display.set_mode((self.window_width, self.window_height))
 
         # canvas: low resolution, draw on then draw to window
@@ -31,6 +31,9 @@ class Display():
 
     def event_handler(self):
         '''Handle inputs.'''
+
+        # set refresh rate
+        self.clock.tick(self.tick)
 
         # loop over events
         for event in pygame.event.get():
@@ -78,9 +81,6 @@ class Display():
 
     def draw_snake(self, snake):
         '''Update snake display.'''
-
-        # set refresh rate
-        self.clock.tick(self.tick)
         
         # draw over old tail position
         if snake.tail_old:
@@ -117,15 +117,15 @@ class Display():
 
 class MultiDisplay():
     
-    def __init__(self, multi_size, grid_height, grid_width, tick=1):
+    def __init__(self, multi_size, grid_height, grid_width, window_height=500, window_width=500, tick=1):
         '''Initialize.'''
 
         # initialize pygame
         pygame.init()
 
         # window: high resolution, display on screen
-        self.window_width = 1000
-        self.window_height = 1000
+        self.window_width = window_width
+        self.window_height = window_height
         self.window = pygame.display.set_mode((self.window_width, self.window_height))
 
         # canvas: low resolution, draw on then draw to window
@@ -146,6 +146,9 @@ class MultiDisplay():
     def event_handler(self):
         '''Handle inputs.'''
 
+        # set refresh rate
+        self.clock.tick(self.tick)
+
         # loop over events
         for event in pygame.event.get():
             
@@ -158,7 +161,7 @@ class MultiDisplay():
 
 
     def draw_initial_population(self, snakes):
-        '''Initial drawing of snake body, food and grid.'''
+        '''Initial drawing of each snake body, food and grid.'''
 
         # fill window with white
         self.window.fill((255, 255, 255))
@@ -203,15 +206,12 @@ class MultiDisplay():
 
 
     def draw_population(self, snakes):
-        '''Update snake display for each snake.'''
-
-        # set refresh rate
-        self.clock.tick(self.tick)
+        '''Update each +snake display.'''
 
         # for each snake
         for i, snake in enumerate(snakes):
 
-            # do not update dead snakes
+            # ignore dead snakes: leave canvas unchanged
             if snake.dead:
                 continue
 
