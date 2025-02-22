@@ -6,8 +6,8 @@ rng = np.random.default_rng()
 
 class Population():
 
-    def __init__(self, size=4, mutation_rate=0.2):
-        self.size = size
+    def __init__(self, population_size, mutation_rate=0.2):
+        self.population_size = population_size
         self.population = []
         self.mutation_rate = mutation_rate
 

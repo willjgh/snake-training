@@ -3,5 +3,7 @@ Testing genetic algorithms to learn snake
 
 ## Todo
 
-- clean up snake termination: ensure 'dead' attribute checked for before any actions
-- MultiDisplay arguments: make clear it accepts list of 'Snake' class not 'Model' class
+- method to run models of population using snake (without display) and compute fitness
+- store fitness and seed information on model
+- method to display a given model / all models
+- evolution of population using fitness
