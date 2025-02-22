@@ -8,15 +8,20 @@ rng = np.random.default_rng()
 
 class Population():
 
-    def __init__(self, population_size, mutation_rate=0.2):
+    def __init__(self, population_size, mutation_rate=0.05):
         '''Initialize.'''
         self.population_size = population_size
         self.population = []
         self.mutation_rate = mutation_rate
+        self.generation = 0
 
 
     def initialize(self):
         '''Initialize a new population.'''
+
+        # reset generations
+        self.generation = 0
+
         # clear population
         self.population = []
 
@@ -130,36 +135,60 @@ class Population():
         return model_cross
     
 
-    def compute_fitness(self):
+    def compute_fitness(self, trials=3):
         '''Run trials to compute fitness of each model in population.'''
 
-        # setup trial: seed and initial length
-        seed = 0
-        initial_length = 3
-        grid_height = 16
-        grid_width = 16
+        # trials
+        seed_list = rng.integers(0, 1000, size=trials)
+        length_list = [3 for i in range(trials)]
 
         # for each model in population
         for model in self.population:
 
-            # create a snake with trial settings
-            snake = Snake(model, grid_height, grid_width, initial_length, seed)
+            # clear fitness information
+            model.information = []
+            model.fitness = 0
 
-            # run until dead
-            while not snake.dead:
-                snake.move_snake()
+            # run multiple trials
+            for i in range(trials):
 
-            # store trial information: including fitness
-            model.information = {
-                'seed': seed,
-                'initial_length': initial_length,
-                'grid_width': grid_width,
-                'grid_height': grid_height,
-                'fitness': len(snake) - initial_length
-            }
+                # setup trial: seed and initial length
+                seed = seed_list[i]
+                initial_length = length_list[i]
+                grid_height = 16
+                grid_width = 16
 
-            # store overall fitness (will later be sum over several trials)
-            model.fitness = model.information['fitness']
+                # create a snake with trial settings
+                snake = Snake(model, grid_height, grid_width, initial_length, seed)
+
+                # run until dead
+                while not snake.dead:
+                    snake.move_snake()
+
+                # trial information
+                trial_info = {
+                    'seed': seed,
+                    'initial_length': initial_length,
+                    'grid_width': grid_width,
+                    'grid_height': grid_height,
+                    'fitness': snake.eaten
+                }
+
+                # store
+                model.information.append(trial_info)
+
+            # compute overall fitness (will later be sum over several trials)
+            model.fitness = np.mean([trial_info['fitness'] for trial_info in model.information])
+
+
+    def print_population_statistics(self):
+        '''Display information about fitness of population.'''
+
+        print("-"*20)
+        print(f"Generation {self.generation}:")
+        print(f"Best fitness: {max([model.fitness for model in self.population])}")
+        print(f"Average fitness: {np.mean([model.fitness for model in self.population])}")
+        print("-"*20)
 
     
     def display_fittest(self):
@@ -168,19 +197,22 @@ class Population():
         # get model with highest fitness
         fittest_model = max(self.population, key=lambda md: md.fitness)
 
+        # find trial with highest fitness
+        best_trial = max(fittest_model.information, key=lambda trial_info: trial_info['fitness'])
+
         # create a snake game with given settings
         snake = Snake(
             fittest_model,
-            fittest_model.information['grid_height'],
-            fittest_model.information['grid_width'],
-            fittest_model.information['initial_length'],
-            fittest_model.information['seed']
+            best_trial['grid_height'],
+            best_trial['grid_width'],
+            best_trial['initial_length'],
+            best_trial['seed']
         )
 
         # create a display
         display = Display(
-            fittest_model.information['grid_height'],
-            fittest_model.information['grid_width']
+            best_trial['grid_height'],
+            best_trial['grid_width']
         )
 
         # draw initial snake
@@ -200,6 +232,9 @@ class Population():
 
             # handle events
             display.event_handler()
+
+        # close display
+        display.quit()
 
 
     def evolve_population(self, selected_number=10):
@@ -244,3 +279,6 @@ class Population():
 
         # update population
         self.population = new_population
+
+        # update generations
+        self.generation += 1
