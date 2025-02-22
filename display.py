@@ -45,6 +45,10 @@ class Display():
                 if event.key == pygame.K_ESCAPE:
                     self.running = False
 
+    def quit(self):
+        '''Quit display.'''
+        pygame.display.quit()
+
 
     def draw_initial_snake(self, snake):
         '''Initial drawing of snake body, food and grid.'''
