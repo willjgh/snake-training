@@ -2,13 +2,21 @@ import numpy as np
 
 class Snake():
 
-    def __init__(self, model, grid_height, grid_width, initial_length, seed):
+    def __init__(self, model, grid_height, grid_width, initial_length, seed, move_limit=100):
         '''Initialize'''
+
+        # model controlling snake
         self.model = model
+
+        # setup information
         self.grid_height = grid_height
         self.grid_width = grid_width
         self.initial_length = initial_length
         self.seed = seed
+        
+        # move limit / currently remaining: die without food
+        self.move_limit = move_limit
+        self.moves_remaining = move_limit
 
         # random generator
         self.rng = np.random.default_rng(seed)
@@ -19,9 +27,8 @@ class Snake():
         # spawn food
         self.spawn_food()
 
-        # old positions for display
+        # old tail position for display
         self.tail_old = None
-        self.food_old = None
 
         # snake status
         self.dead = False
@@ -72,6 +79,11 @@ class Snake():
     def move_snake(self):
         '''Use model to move snake body.'''
 
+        # no moves remaining: end
+        if self.moves_remaining == 0:
+            self.dead = True
+            return None
+
         # collect state
         x = np.array(self.body[0])
 
@@ -99,8 +111,8 @@ class Snake():
         # moving into food: do not delete tail
         if (head_height_new, head_width_new) == self.food:
 
-            # store position of old food for display
-            food_old = self.food
+            # reset moves remaining
+            self.moves_remaining = self.move_limit
 
             # spawn new food
             status = self.spawn_food()
@@ -115,8 +127,8 @@ class Snake():
 
         else:
 
-            # no new food
-            food_old = None
+            # use up one move
+            self.moves_remaining -= 1
 
             # remove tail
             tail_old = self.body.pop()
@@ -134,8 +146,7 @@ class Snake():
         # no collisions: add head
         self.body.insert(0, (head_height_new, head_width_new))
         
-        # store old tail and food position for display
+        # store old tail position for display
         self.tail_old = tail_old
-        self.food_old = food_old
 
         return None
