@@ -2,7 +2,7 @@ import numpy as np
 
 class Snake():
 
-    def __init__(self, model, grid_height, grid_width, initial_length, seed, move_limit=100):
+    def __init__(self, model, grid_height, grid_width, initial_length, seed, move_limit=300):
         '''Initialize'''
 
         # model controlling snake
@@ -18,6 +18,9 @@ class Snake():
         self.move_limit = move_limit
         self.moves_remaining = move_limit
 
+        # food counter
+        self.eaten = 0
+
         # random generator
         self.rng = np.random.default_rng(seed)
 
@@ -32,6 +35,7 @@ class Snake():
 
         # snake status
         self.dead = False
+
 
     def spawn_snake(self):
         '''Generate random locations for position of snake.'''
@@ -53,11 +57,6 @@ class Snake():
         # create body
         self.body = [(head_height, head_width + i*dw) for i in range(self.initial_length)]
 
-    
-    def __len__(self):
-        '''Get current snake length.'''
-        return len(self.body)
-
 
     def spawn_food(self):
         '''Generate random location for food to spawn.'''
@@ -74,6 +73,64 @@ class Snake():
             if (food_height, food_width) not in self.body:
                 self.food = (food_height, food_width)
                 return True
+    
+
+    def look(self, dh, dw):
+        '''Compute distance from snake head to wall, food, body in direction (dh, dw).'''
+
+        # distances
+        wall_dist = None
+        food_dist = None
+        body_dist = None
+        dist_counter = 0
+
+        # initial position
+        height, width = self.body[0]
+
+        # while within grid bounds
+        while (height >= 0) and (width >= 0) and (height <= self.grid_height - 1) and (width <= self.grid_width - 1):
+
+            # check if at food
+            if (height, width) == self.food:
+                food_dist = dist_counter
+
+            # check if in body (but not head) (and first time)
+            if ((height, width) in self.body[1:]) and (body_dist is None):
+                body_dist = dist_counter
+
+            # increment distance
+            height += dh
+            width += dw
+            dist_counter += 1
+
+        # once out of bounds know at wall
+        wall_dist = dist_counter
+
+        # food or body not found: default -1
+        if food_dist is None:
+            food_dist = -1
+        if body_dist is None:
+            body_dist = -1
+
+        return wall_dist, food_dist, body_dist
+    
+    
+    def state_to_input(self):
+        '''Compute model input vector from current gamestate.'''
+
+        # collect input
+        x = np.array([
+            *self.look(-1, 0),
+            *self.look(-1, 1),
+            *self.look(0, 1),
+            *self.look(1, 1),
+            *self.look(1, 0),
+            *self.look(1, -1),
+            *self.look(0, -1),
+            *self.look(-1, -1),
+        ])
+
+        return x
 
 
     def move_snake(self):
@@ -84,8 +141,8 @@ class Snake():
             self.dead = True
             return None
 
-        # collect state
-        x = np.array(self.body[0])
+        # compute input
+        x = self.state_to_input()
 
         # pass to model
         move = self.model.move(x)
@@ -113,6 +170,9 @@ class Snake():
 
             # reset moves remaining
             self.moves_remaining = self.move_limit
+
+            # increment food counter
+            self.eaten += 1
 
             # spawn new food
             status = self.spawn_food()
