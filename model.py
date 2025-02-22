@@ -4,13 +4,17 @@ rng = np.random.default_rng()
 
 class Model():
 
-    def __init__(self, widths=[3, 3, 3], input_width=2, output_width=4):
+    def __init__(self, widths=[16, 8], input_width=24, output_width=4):
         '''Initialize'''
         self.weights = []
         self.biases = []
         self.activations = []
         self.layer_widths = [input_width] + widths + [output_width]
         self.depth = len(self.layer_widths)
+
+        # fitness information
+        self.information = []
+        self.fitness = None
 
     def softmax(self, x):
         '''Softmax activation function.'''
