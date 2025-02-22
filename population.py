@@ -1,15 +1,19 @@
 import numpy as np
 import copy
 from model import Model
+from snake import Snake
+from display import Display
 
 rng = np.random.default_rng()
 
 class Population():
 
     def __init__(self, population_size, mutation_rate=0.2):
+        '''Initialize.'''
         self.population_size = population_size
         self.population = []
         self.mutation_rate = mutation_rate
+
 
     def initialize(self):
         '''Initialize a new population.'''
@@ -17,10 +21,11 @@ class Population():
         self.population = []
 
         # initialize new models
-        for i in range(self.size):
+        for i in range(self.population_size):
             model = Model()
             model.initialize_parameters()
             self.population.append(model)
+
 
     def mutation(self, model):
         '''Mutate parameters of a given model.'''
@@ -68,6 +73,7 @@ class Population():
 
         # return mutated model
         return model_mut
+
 
     def crossover(self, model_1, model_2):
         '''Crossover parameters of 2 given models.'''
@@ -123,43 +129,118 @@ class Population():
         # return crossed model
         return model_cross
     
-    def evolve(self, selected=[]):
-        '''Evolve new generation'''
 
-        # fail if less than 2 selected
-        if len(selected) < 2:
-            print("Select 2 or more models")
-            return False
+    def compute_fitness(self):
+        '''Run trials to compute fitness of each model in population.'''
+
+        # setup trial: seed and initial length
+        seed = 0
+        initial_length = 3
+        grid_height = 16
+        grid_width = 16
+
+        # for each model in population
+        for model in self.population:
+
+            # create a snake with trial settings
+            snake = Snake(model, grid_height, grid_width, initial_length, seed)
+
+            # run until dead
+            while not snake.dead:
+                snake.move_snake()
+
+            # store trial information: including fitness
+            model.information = {
+                'seed': seed,
+                'initial_length': initial_length,
+                'grid_width': grid_width,
+                'grid_height': grid_height,
+                'fitness': len(snake) - initial_length
+            }
+
+            # store overall fitness (will later be sum over several trials)
+            model.fitness = model.information['fitness']
+
+    
+    def display_fittest(self):
+        '''Display the best performing model.'''
+
+        # get model with highest fitness
+        fittest_model = max(self.population, key=lambda md: md.fitness)
+
+        # create a snake game with given settings
+        snake = Snake(
+            fittest_model,
+            fittest_model.information['grid_height'],
+            fittest_model.information['grid_width'],
+            fittest_model.information['initial_length'],
+            fittest_model.information['seed']
+        )
+
+        # create a display
+        display = Display(
+            fittest_model.information['grid_height'],
+            fittest_model.information['grid_width']
+        )
+
+        # draw initial snake
+        display.draw_initial_snake(snake)
+
+        # loop
+        while display.running:
+
+            # if snake alive
+            if not snake.dead:
+
+                # move snake
+                snake.move_snake()
+
+                # draw update
+                display.draw_snake(snake)
+
+            # handle events
+            display.event_handler()
+
+
+    def evolve_population(self, selected_number=10):
+        '''Use fitness to evolve a new population via selection, crossover and mutation.'''
+
+        # sort population by fitness
+        self.population.sort(key=lambda md: md.fitness, reverse=True)
+
+        # select highest fitness models
+        selected = self.population[:selected_number]
 
         # setup new population
-        new_population = []
+        new_population = selected
 
-        # keep model or replace with mutated or crossed versions
-        for i in range(self.size):
+        # for remaining models: crossover or mutate selected models
+        for i in range(self.population_size - selected_number):
 
-            # keep
-            if i in selected:
-                new_population.append(self.population[i])
-            else:
-                u = rng.uniform()
+            # randomly select to crossover or mutate
+            u = rng.uniform()
+
+            if u < 0.5:
+
+                # choose random selected models
+                model_1, model_2 = rng.choice(selected, size=2)
 
                 # crossover
-                if u < 0.5:
+                model_cross = self.crossover(model_1, model_2)
 
-                    # choose random selected models
-                    j, k = rng.choice(selected, size=2).tolist()
+                # add to new population
+                new_population.append(model_cross)
 
-                    model_cross = self.crossover(self.population[j], self.population[k])
-                    new_population.append(model_cross)
+            else:
 
-                # mutation
-                else:
+                # choose random selected model
+                model = rng.choice(selected, size=1)[0]
 
-                    # choose random selected model
-                    j = int(rng.choice(selected, size=1))
+                # mutate
+                model_mut = self.mutation(model)
 
-                    model_mut = self.mutation(self.population[j])
-                    new_population.append(model_mut)
+                # add to new population
+                new_population.append(model_mut)
 
-        # set to population
+        # update population
         self.population = new_population
