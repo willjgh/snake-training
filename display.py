@@ -4,7 +4,7 @@ import numpy as np
 
 class Display():
     
-    def __init__(self, grid_height, grid_width, window_height=500, window_width=500, tick=1):
+    def __init__(self, grid_height, grid_width, window_height=500, window_width=500, tick=10):
         '''Initialize.'''
 
         # initialize pygame
@@ -81,20 +81,21 @@ class Display():
 
     def draw_snake(self, snake):
         '''Update snake display.'''
-        
-        # draw over old tail position
+
+        # if tail removed
         if snake.tail_old:
+
+            # draw over old tail position in black
             pygame.gfxdraw.pixel(self.canvas, snake.tail_old[1], snake.tail_old[0], (0, 0, 0))
 
-        # draw new head position
+        # if tail not removed: must have eaten food
+        else:
+
+            # draw new food position in red
+            pygame.gfxdraw.pixel(self.canvas, snake.food[1], snake.food[0], (255, 0, 0))
+
+        # draw new head position (will draw over old food position if eaten)
         pygame.gfxdraw.pixel(self.canvas, snake.body[0][1], snake.body[0][0], (0, 255, 0))
-
-        # draw over old food position
-        if snake.food_old:
-            pygame.gfxdraw.pixel(self.canvas, snake.food_old[1], snake.food_old[0], (0, 255, 0))
-
-            # draw new food position
-            pygame.gfxdraw.pixel(self.canvas, snake.food[1], snake.food[0], (0, 255, 0))
 
         # blit canvas to window
         self.window.blit(
@@ -218,19 +219,21 @@ class MultiDisplay():
             # get canvas
             canvas = self.canvas_list[i]
             
-            # draw over old tail position
+            # if tail removed
             if snake.tail_old:
+
+                # draw over old tail position in black
                 pygame.gfxdraw.pixel(canvas, snake.tail_old[1], snake.tail_old[0], (0, 0, 0))
 
-            # draw new head position
+            # if tail not removed: must have eaten food
+            else:
+
+                # draw new food position in red
+                pygame.gfxdraw.pixel(canvas, snake.food[1], snake.food[0], (255, 0, 0))
+
+            # draw new head position (will draw over old food position if eaten)
             pygame.gfxdraw.pixel(canvas, snake.body[0][1], snake.body[0][0], (0, 255, 0))
 
-            # draw over old food position
-            if snake.food_old:
-                pygame.gfxdraw.pixel(canvas, snake.food_old[1], snake.food_old[0], (0, 255, 0))
-
-                # draw new food position
-                pygame.gfxdraw.pixel(canvas, snake.food[1], snake.food[0], (0, 255, 0))
 
         # blit each canvas to section on window
         for i in range(self.multi_size):
