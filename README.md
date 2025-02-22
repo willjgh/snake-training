@@ -3,7 +3,7 @@ Testing genetic algorithms to learn snake
 
 ## Todo
 
-- method to run models of population using snake (without display) and compute fitness
-- store fitness and seed information on model
-- method to display a given model / all models
-- evolution of population using fitness
+- (Snake) method to construct model input from snake game state: distance to walls, tail, food, etc
+
+- (Population)(MultiDisplay) method to display all models of population
+- (Display) draw snake grey when dead, but avoid repeatedly drawing once dead?
